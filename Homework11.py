@@ -148,12 +148,11 @@ if __name__ == "__main__":
     address_book = AddressBook()
     record1 = Record("Dima Smith")
     record2 = Record("Jane Smith", "+38(098)5433521", "1959-08-26")
-
     record3 = Record("Jane", "2222876543210", "1925-10-6")
     record4 = Record("Dimasik", "2222876543210", "1925-08-24")
     record5 = Record("Ksusha", "22228765432510", "1925-08-07")
     record6 = Record("Vitalik", "22228754324310", "1925-08-18")
-#
+
     address_book.add_record(record1)
     address_book.add_record(record2)
     address_book.add_record(record3)
