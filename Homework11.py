@@ -1,6 +1,7 @@
+from ast import pattern
 from collections import UserDict
 from datetime import datetime, timedelta
-
+import re
 
 class Field:
     def __init__(self, value):
@@ -31,8 +32,9 @@ class Phone(Field):
     @value.setter
     def value(self, value):
         if value:
-            if value.startswith("+") or value.startswith("0"):
-                self.__value = value
+            pattern_for_phone=r'^\+?\d{11,16}$|^\d{10,12}$|^\+?\d{0,4}\(\d{3}\)\d{7,9}$|^\+?\d{0,4}\(\d{3}\)\d{1,3}-\d{1,3}-\d{1,3}$|^\(\d{3}\)\d{1,3}-\d{1,3}-\d{1,3}|^\d{3}-\d{1,3}-\d{1,3}-\d{1,3}$'
+            if re.match(pattern_for_phone, value):
+                self.__value=value
             else:
                 raise ValueError("Invalid phone number format")
 
@@ -54,7 +56,7 @@ class Birthday(Field):
                 datetime.strptime(value, "%Y-%m-%d")
                 self.__value = value
             except ValueError:
-                raise ValueError("Invalid date format")
+                raise ValueError("Invalid date format, format should be like 2000-01-31")
 
 
 class Record:
@@ -97,11 +99,16 @@ class Record:
         return f"{days_left} days"
 
 
-class AddressBook(UserDict,Record):
+class AddressBook(UserDict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_size = 2  # Розмір однієї сторінки
+        self.page_size = 1 # Розмір однієї сторінки
         self.current_page = 0
+
+    def __call__(self,n):
+        if n:
+            self.page_size = n  # Розмір однієї сторінки
+        return self.__iter__()
 
     def __iter__(self):
         self.current_page = 0
@@ -114,22 +121,39 @@ class AddressBook(UserDict,Record):
         if not records:
             raise StopIteration
         self.current_page += 1
-        return records
+        yield records
 
     def add_record(self, record):
         self.data[record.name.value] = record
+
+    def iterator(self, n=None):
+        try:
+            generator = address_book(n)
+            for records_list in generator:
+                for records in records_list:
+                    print(f"--------------PAGE {self.current_page}---------------")
+                    for record in records:
+                        print(f"|->Name: {record.name.value}")
+                        for phone in record.phones:
+                            print(f"|->Phone: {phone}")
+                        for _ in record.birt_list:
+                            print(f"|->Total days to Birthday: {record.days_to_birthday()}")
+                        print("***********************************")
+        except RuntimeError:
+            return ">>>>>>>>>>>>>>>END<<<<<<<<<<<<<<<<<"
 
 
 
 if __name__ == "__main__":
     address_book = AddressBook()
     record1 = Record("Dima Smith")
-    record2 = Record("Jane Smith", "+876543210", "1959-08-26")
-    record3 = Record("Jane", "+876543210", "1925-10-6")
-    record4 = Record("Dimasik", "+876543210", "1925-08-24")
-    record5 = Record("Ksusha", "+8765432510", "1925-08-07")
-    record6 = Record("Vitalik", "+87654325434310", "1925-08-18")
+    record2 = Record("Jane Smith", "+38(098)5433521", "1959-08-26")
 
+    record3 = Record("Jane", "2222876543210", "1925-10-6")
+    record4 = Record("Dimasik", "2222876543210", "1925-08-24")
+    record5 = Record("Ksusha", "22228765432510", "1925-08-07")
+    record6 = Record("Vitalik", "22228754324310", "1925-08-18")
+#
     address_book.add_record(record1)
     address_book.add_record(record2)
     address_book.add_record(record3)
@@ -137,17 +161,5 @@ if __name__ == "__main__":
     address_book.add_record(record5)
     address_book.add_record(record6)
 
-    print(next(address_book))
-    print(next(address_book))
-    print(next(address_book))
-
-
-    for records in address_book:
-        for record in records:
-            print(f"|->Name: {record.name.value}")
-            for phone in record.phones:
-                print(f"|->Phone: {phone}")
-            for _ in record.birt_list:
-                print(f"|->Total days to Birthday: {record.days_to_birthday()}")
-            print("-----------------------------------")
+print(address_book.iterator(2))
 
